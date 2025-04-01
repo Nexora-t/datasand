@@ -1,0 +1,126 @@
+<!-- الموقع الفرعي لإضافة بيانات الأنمي -->
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الأنمي</title>
+    <link rel="stylesheet" href="admin-styles.css">
+    <script type="module" src="admin.js"></script>
+</head>
+<body>
+    <header>
+        <h1>إدارة الأنمي</h1>
+    </header>
+    <main>
+        <section>
+            <h2>إضافة أنمي جديد</h2>
+            <form id="anime-form">
+                <label for="title">عنوان الأنمي:</label>
+                <input type="text" id="title" required>
+    
+                <label for="description">الوصف:</label>
+                <textarea id="description" required></textarea>
+    
+                <label for="image">رابط الصورة:</label>
+                <input type="url" id="image" required>
+    
+                <div id="episodes-container">
+                    <label>روابط الحلقات:</label>
+                    <div class="episode-input">
+                        <input type="url" class="episode" required>
+                    </div>
+                </div>
+                <button type="button" id="add-episode">إضافة حلقة أخرى</button>
+    
+                <button type="submit">إضافة الأنمي</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>إضافة حلقة جديدة لأنمي موجود</h2>
+            <form id="episode-form">
+                <label for="anime-name">اسم الأنمي:</label>
+                <input type="text" id="anime-name" required>
+    
+                <label for="new-episode">رابط الحلقة الجديدة:</label>
+                <input type="url" id="new-episode" required>
+    
+                <button type="submit">إضافة الحلقة</button>
+            </form>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, arrayUnion, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCYTzkQy64G_xnWKB62f7SrqqMd-O6XL_M",
+            authDomain: "brog-2d8b5.firebaseapp.com",
+            projectId: "brog-2d8b5",
+            storageBucket: "brog-2d8b5.firebasestorage.app",
+            messagingSenderId: "1034188865864",
+            appId: "1:1034188865864:web:b736100dcd9bfd7604b37d",
+            measurementId: "G-34ZSLGWZ6N"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        document.getElementById("add-episode").addEventListener("click", () => {
+            const container = document.getElementById("episodes-container");
+            const inputDiv = document.createElement("div");
+            inputDiv.classList.add("episode-input");
+            inputDiv.innerHTML = '<input type="url" class="episode" required>';
+            container.appendChild(inputDiv);
+        });
+
+        document.getElementById("anime-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById("title").value;
+            const description = document.getElementById("description").value;
+            const image = document.getElementById("image").value;
+            const episodes = Array.from(document.querySelectorAll(".episode")).map(ep => ep.value.trim());
+            
+            try {
+                await addDoc(collection(db, "animeList"), {
+                    title,
+                    description,
+                    image,
+                    episodes
+                });
+                alert("تمت إضافة الأنمي بنجاح!");
+                document.getElementById("anime-form").reset();
+            } catch (error) {
+                console.error("خطأ في الإضافة: ", error);
+            }
+        });
+
+        document.getElementById("episode-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            
+            const animeName = document.getElementById("anime-name").value;
+            const newEpisode = document.getElementById("new-episode").value;
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "animeList"));
+                querySnapshot.forEach(async (docSnap) => {
+                    if (docSnap.data().title === animeName) {
+                        const animeRef = doc(db, "animeList", docSnap.id);
+                        await updateDoc(animeRef, {
+                            episodes: arrayUnion(newEpisode)
+                        });
+                        alert("تمت إضافة الحلقة بنجاح!");
+                        document.getElementById("episode-form").reset();
+                    }
+                });
+            } catch (error) {
+                console.error("خطأ في إضافة الحلقة: ", error);
+            }
+        });
+    </script>
+</body>
+                  </html>
+                  
